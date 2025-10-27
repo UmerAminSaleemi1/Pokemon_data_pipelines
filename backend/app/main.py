@@ -9,7 +9,7 @@ from .database import engine, get_db
 # Creating database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Pokémon Data Pipeline", version="1.0.0")
+app = FastAPI(title="Pokemon Data Pipeline", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
@@ -40,7 +40,7 @@ def get_pokemon(
     type_filter: str = None,
     db: Session = Depends(get_db)
 ):
-    #Get all Pokémon with optional filtering
+    #Get all Pokemon with optional filtering
     query = db.query(models.Pokemon)
     
     if type_filter:
@@ -66,13 +66,13 @@ def get_pokemon(
         result.append(pokemon_dict)
     
     return result
-#Get a specific Pokémon by ID
+#Get a specific Pokemon by ID
 @app.get("/pokemon/{pokemon_id}", response_model=schemas.Pokemon)
 def get_pokemon_by_id(pokemon_id: int, db: Session = Depends(get_db)):
     
     pokemon = db.query(models.Pokemon).filter(models.Pokemon.id == pokemon_id).first()
     if not pokemon:
-        raise HTTPException(status_code=404, detail="Pokémon not found")
+        raise HTTPException(status_code=404, detail="Pokemon not found")
     
     pokemon_dict = {
         "id": pokemon.id,
@@ -88,13 +88,13 @@ def get_pokemon_by_id(pokemon_id: int, db: Session = Depends(get_db)):
     }
     return pokemon_dict
 
-#Get a specific Pokémon by name
+#Get a specific Pokemon by name
 @app.get("/pokemon/name/{pokemon_name}", response_model=schemas.Pokemon)
 def get_pokemon_by_name(pokemon_name: str, db: Session = Depends(get_db)):
     
     pokemon = db.query(models.Pokemon).filter(models.Pokemon.name == pokemon_name).first()
     if not pokemon:
-        raise HTTPException(status_code=404, detail="Pokémon not found")
+        raise HTTPException(status_code=404, detail="Pokemon not found")
     
     pokemon_dict = {
         "id": pokemon.id,
@@ -109,7 +109,7 @@ def get_pokemon_by_name(pokemon_name: str, db: Session = Depends(get_db)):
         "stats": [{"id": stat.id, "name": stat.name, "base_stat": stat.base_stat, "effort": stat.effort} for stat in pokemon.stats]
     }
     return pokemon_dict
-#Get all available Pokémon types
+#Get all available Pokemon types
 @app.get("/types/", response_model=List[schemas.TypeBase])
 def get_types(db: Session = Depends(get_db)):
    
