@@ -3,41 +3,26 @@ from typing import List, Optional
 
 class TypeBase(BaseModel):
     name: str
-
-class TypeCreate(TypeBase):
-    pass
-
-class Type(TypeBase):
-    id: int
+    id: Optional[int] = None  # Make id optional
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class AbilityBase(BaseModel):
     name: str
-
-class AbilityCreate(AbilityBase):
-    pass
-
-class Ability(AbilityBase):
-    id: int
+    id: Optional[int] = None  # Make id optional
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class StatBase(BaseModel):
     name: str
     base_stat: int
     effort: int
-
-class StatCreate(StatBase):
-    pass
-
-class Stat(StatBase):
-    id: int
+    id: Optional[int] = None  # Make id optional
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class PokemonBase(BaseModel):
     name: str
@@ -45,22 +30,18 @@ class PokemonBase(BaseModel):
     weight: int
     base_experience: int
     sprite_url: str
-    official_artwork_url: str
 
 class PokemonCreate(PokemonBase):
     types: List[str]
     abilities: List[str]
-    stats: List[StatCreate]
+    stats: List[StatBase]
 
 class Pokemon(PokemonBase):
     id: int
-    types: List[Type]
-    abilities: List[Ability]
-    stats: List[Stat]
+    types: List[TypeBase]
+    abilities: List[AbilityBase]
+    stats: List[StatBase]
+    official_artwork_url: Optional[str] = ""  
 
     class Config:
-        from_attributes = True
-
-class PokemonList(BaseModel):
-    pokemon: List[Pokemon]
-    total: int
+        orm_mode = True

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
-    # Use your PostgreSQL connection
+    # PostgreSQL connection
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
         "postgresql://postgres:12345@localhost:5432/pokemon_db"

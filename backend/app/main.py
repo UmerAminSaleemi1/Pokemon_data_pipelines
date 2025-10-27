@@ -6,7 +6,7 @@ from typing import List
 from . import models, schemas, pipeline
 from .database import engine, get_db
 
-# Create database tables
+# Creating database tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Pokémon Data Pipeline", version="1.0.0")
@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize pipeline
+# Initializing pipeline
 pokemon_pipeline = pipeline.PokemonPipeline()
 
 @app.post("/pokemon/run-pipeline/")
@@ -29,7 +29,7 @@ def run_pipeline(
     end_id: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Trigger the ETL pipeline"""
+    #Trigger the ETL pipeline
     result = pokemon_pipeline.run_pipeline(db, start_id, end_id)
     return result
 
@@ -40,40 +40,86 @@ def get_pokemon(
     type_filter: str = None,
     db: Session = Depends(get_db)
 ):
-    """Get all Pokémon with optional filtering"""
+    #Get all Pokémon with optional filtering
     query = db.query(models.Pokemon)
     
     if type_filter:
         query = query.join(models.Pokemon.types).filter(models.Type.name == type_filter)
     
-    pokemon = query.offset(skip).limit(limit).all()
-    return pokemon
-
+    pokemon_list = query.offset(skip).limit(limit).all()
+    
+    # Converting to dictionaries that match the schema exactly
+    result = []
+    for pokemon in pokemon_list:
+        pokemon_dict = {
+            "id": pokemon.id,
+            "name": pokemon.name,
+            "height": pokemon.height,
+            "weight": pokemon.weight,
+            "base_experience": pokemon.base_experience,
+            "sprite_url": pokemon.sprite_url,
+            "official_artwork_url": getattr(pokemon, 'official_artwork_url', pokemon.sprite_url),
+            "types": [{"id": type.id, "name": type.name} for type in pokemon.types],
+            "abilities": [{"id": ability.id, "name": ability.name} for ability in pokemon.abilities],
+            "stats": [{"id": stat.id, "name": stat.name, "base_stat": stat.base_stat, "effort": stat.effort} for stat in pokemon.stats]
+        }
+        result.append(pokemon_dict)
+    
+    return result
+#Get a specific Pokémon by ID
 @app.get("/pokemon/{pokemon_id}", response_model=schemas.Pokemon)
 def get_pokemon_by_id(pokemon_id: int, db: Session = Depends(get_db)):
-    """Get a specific Pokémon by ID"""
+    
     pokemon = db.query(models.Pokemon).filter(models.Pokemon.id == pokemon_id).first()
     if not pokemon:
         raise HTTPException(status_code=404, detail="Pokémon not found")
-    return pokemon
+    
+    pokemon_dict = {
+        "id": pokemon.id,
+        "name": pokemon.name,
+        "height": pokemon.height,
+        "weight": pokemon.weight,
+        "base_experience": pokemon.base_experience,
+        "sprite_url": pokemon.sprite_url,
+        "official_artwork_url": getattr(pokemon, 'official_artwork_url', pokemon.sprite_url),
+        "types": [{"id": type.id, "name": type.name} for type in pokemon.types],
+        "abilities": [{"id": ability.id, "name": ability.name} for ability in pokemon.abilities],
+        "stats": [{"id": stat.id, "name": stat.name, "base_stat": stat.base_stat, "effort": stat.effort} for stat in pokemon.stats]
+    }
+    return pokemon_dict
 
+#Get a specific Pokémon by name
 @app.get("/pokemon/name/{pokemon_name}", response_model=schemas.Pokemon)
 def get_pokemon_by_name(pokemon_name: str, db: Session = Depends(get_db)):
-    """Get a specific Pokémon by name"""
+    
     pokemon = db.query(models.Pokemon).filter(models.Pokemon.name == pokemon_name).first()
     if not pokemon:
         raise HTTPException(status_code=404, detail="Pokémon not found")
-    return pokemon
-
-@app.get("/types/", response_model=List[schemas.Type])
+    
+    pokemon_dict = {
+        "id": pokemon.id,
+        "name": pokemon.name,
+        "height": pokemon.height,
+        "weight": pokemon.weight,
+        "base_experience": pokemon.base_experience,
+        "sprite_url": pokemon.sprite_url,
+        "official_artwork_url": getattr(pokemon, 'official_artwork_url', pokemon.sprite_url),
+        "types": [{"id": type.id, "name": type.name} for type in pokemon.types],
+        "abilities": [{"id": ability.id, "name": ability.name} for ability in pokemon.abilities],
+        "stats": [{"id": stat.id, "name": stat.name, "base_stat": stat.base_stat, "effort": stat.effort} for stat in pokemon.stats]
+    }
+    return pokemon_dict
+#Get all available Pokémon types
+@app.get("/types/", response_model=List[schemas.TypeBase])
 def get_types(db: Session = Depends(get_db)):
-    """Get all available Pokémon types"""
+   
     types = db.query(models.Type).all()
-    return types
+    return [{"id": type.id, "name": type.name} for type in types]
 
+#Health check endpoint
 @app.get("/health/")
 def health_check():
-    """Health check endpoint"""
+    
     return {"status": "healthy"}
 
 if __name__ == "__main__":

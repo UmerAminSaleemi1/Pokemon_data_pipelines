@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 class PokemonPipeline:
     def __init__(self):
         self.base_url = settings.POKEAPI_BASE_URL
-
+#Fetch raw Pokemon data from PokemonAPI
     def fetch_pokemon_data(self, pokemon_id: int) -> dict:
-        """Fetch raw Pokémon data from PokeAPI"""
+        
         try:
             response = requests.get(f"{self.base_url}/pokemon/{pokemon_id}")
             response.raise_for_status()
@@ -20,9 +20,9 @@ class PokemonPipeline:
         except requests.RequestException as e:
             logger.error(f"Error fetching Pokémon {pokemon_id}: {e}")
             return None
-
+#Transforming raw API data into structured format
     def transform_pokemon_data(self, raw_data: dict) -> schemas.PokemonCreate:
-        """Transform raw API data into structured format"""
+    
         
         # Extract sprites
         sprites = raw_data.get('sprites', {})
@@ -55,9 +55,9 @@ class PokemonPipeline:
             abilities=abilities,
             stats=stats
         )
-
+#Get existing type or create new one
     def get_or_create_type(self, db: Session, type_name: str) -> models.Type:
-        """Get existing type or create new one"""
+        
         db_type = db.query(models.Type).filter(models.Type.name == type_name).first()
         if not db_type:
             db_type = models.Type(name=type_name)
@@ -65,9 +65,9 @@ class PokemonPipeline:
             db.commit()
             db.refresh(db_type)
         return db_type
-
+#Get existing ability or create new one
     def get_or_create_ability(self, db: Session, ability_name: str) -> models.Ability:
-        """Get existing ability or create new one"""
+        
         db_ability = db.query(models.Ability).filter(models.Ability.name == ability_name).first()
         if not db_ability:
             db_ability = models.Ability(name=ability_name)
@@ -75,17 +75,16 @@ class PokemonPipeline:
             db.commit()
             db.refresh(db_ability)
         return db_ability
-
+#Load transformed Pokemon data into PostgreSQL database
     def load_pokemon_data(self, db: Session, pokemon_data: schemas.PokemonCreate) -> models.Pokemon:
-        """Load transformed Pokémon data into PostgreSQL database"""
         
-        # Check if Pokémon already exists
+        # Check if Pokemon already exists
         existing_pokemon = db.query(models.Pokemon).filter(models.Pokemon.name == pokemon_data.name).first()
         if existing_pokemon:
             logger.info(f"Pokémon {pokemon_data.name} already exists, skipping...")
             return existing_pokemon
 
-        # Create Pokémon
+        # Create Pokemon
         db_pokemon = models.Pokemon(
             name=pokemon_data.name,
             height=pokemon_data.height,
@@ -122,9 +121,9 @@ class PokemonPipeline:
         db.refresh(db_pokemon)
         logger.info(f"Successfully loaded Pokémon: {pokemon_data.name}")
         return db_pokemon
-
+#Run the complete ETL pipeline for a range of Pokemon
     def run_pipeline(self, db: Session, start_id: int = 1, end_id: int = 20):
-        """Run the complete ETL pipeline for a range of Pokémon"""
+        
         logger.info(f"Starting Pokémon pipeline for IDs {start_id} to {end_id}")
         
         successful = 0
